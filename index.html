@@ -1,0 +1,755 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>
+:root{color-scheme:light}
+body{margin:0;font-size:14px}
+[hidden]{display:none!important}
+</style>
+<title>Clinic Outreach Desk</title>
+<meta name="description" content="Track clinic owners you have spoken with, tag them, and set follow-up reminders.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a working desk — summary strip, then two tabs (Clinics / Follow-ups), forms slide in as a sheet */
+:root{
+  --bg:#f3f6f5; --surface:#ffffff; --sunk:#e8eeec; --line:#d3dedb;
+  --fg:#15302c; --muted:#5b726d;
+  --accent:#0f6b5f; --accent-ink:#ffffff; --accent-soft:#d8ece8;
+  --dental:#2a5bd7; --dental-soft:#e0e8fb;
+  --other:#8a5a12; --other-soft:#f6ead4;
+  --due:#c2410c; --due-soft:#fde5d6;
+  --ok:#2f7d32; --ok-soft:#dcefdc;
+  --shadow:0 10px 30px rgba(15,50,45,.14);
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Figtree", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1716; --surface:#152220; --sunk:#1b2b29; --line:#2a3d3a;
+  --fg:#e3eeeb; --muted:#93aaa5;
+  --accent:#4fbfae; --accent-ink:#06201c; --accent-soft:#183a35;
+  --dental:#8aa9ff; --dental-soft:#1d2a4a;
+  --other:#e2b56a; --other-soft:#3a2d16;
+  --due:#ff9a6b; --due-soft:#3d2215;
+  --ok:#7fd083; --ok-soft:#1c3520;
+  --shadow:0 10px 30px rgba(0,0,0,.5);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0e1716; --surface:#152220; --sunk:#1b2b29; --line:#2a3d3a;
+  --fg:#e3eeeb; --muted:#93aaa5;
+  --accent:#4fbfae; --accent-ink:#06201c; --accent-soft:#183a35;
+  --dental:#8aa9ff; --dental-soft:#1d2a4a;
+  --other:#e2b56a; --other-soft:#3a2d16;
+  --due:#ff9a6b; --due-soft:#3d2215;
+  --ok:#7fd083; --ok-soft:#1c3520;
+  --shadow:0 10px 30px rgba(0,0,0,.5);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+:root{--t0:#0f6b5f;--t1:#2a5bd7;--t2:#b4235a;--t3:#8a5a12;--t4:#6d3fc0;--t5:#3f6f1f}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--t0:#4fbfae;--t1:#8aa9ff;--t2:#ff8fb5;--t3:#e2b56a;--t4:#b99bff;--t5:#9ed27a}}
+:root[data-theme="dark"]{--t0:#4fbfae;--t1:#8aa9ff;--t2:#ff8fb5;--t3:#e2b56a;--t4:#b99bff;--t5:#9ed27a}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1080px;margin:0 auto;padding-block:20px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:20px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:clamp(1.5rem,3.5vw,2rem)}
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+.top p{margin:4px 0 0;color:var(--muted)}
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:8px;padding:8px 14px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.small{padding:5px 10px;font-size:13px;border-radius:6px}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{color:var(--fg);border-color:var(--line)}
+.btn.danger{color:var(--due)}
+
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+.stat{padding:14px 16px;border-left:1px solid var(--line)}
+.stat:first-child{border-left:0}
+.stat b{display:block;font-family:var(--f-mono);font-size:1.6rem;font-weight:500;font-variant-numeric:tabular-nums;line-height:1.2}
+.stat span{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.stat.alert b{color:var(--due)}
+@media (max-width:560px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stat:nth-child(3){border-left:0}.stat:nth-child(n+3){border-top:1px solid var(--line)}}
+
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line)}
+.tab{background:none;border:0;border-bottom:2px solid transparent;padding:10px 14px;font-weight:600;color:var(--muted);margin-bottom:-1px}
+.tab[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.tab .count{font-family:var(--f-mono);font-size:12px;background:var(--sunk);border-radius:99px;padding:1px 7px;margin-left:4px}
+.tab .count.hot{background:var(--due-soft);color:var(--due)}
+
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.toolbar input[type=search]{flex:1 1 220px;min-width:0}
+input,select,textarea{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+textarea{resize:vertical;min-height:72px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:none;padding:7px 12px;color:var(--muted);font-weight:500}
+.seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--fg)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:10px;align-content:start;min-width:0}
+.card-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.card-head h3{font-size:1.1rem;overflow-wrap:anywhere}
+.chip{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;padding:3px 8px;border-radius:99px;white-space:nowrap}
+.chip.dental{background:var(--dental-soft);color:var(--dental)}
+.chip.other{background:var(--other-soft);color:var(--other)}
+.rows{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;font-size:14px;margin:0}
+.rows dt{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.05em;padding-top:2px}
+.rows dd{margin:0;overflow-wrap:anywhere;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.mono{font-family:var(--f-mono);font-size:13px}
+.copy{border:0;background:var(--sunk);color:var(--muted);border-radius:5px;font-size:11px;padding:2px 7px}
+.copy:hover{color:var(--fg)}
+.remarks{background:var(--sunk);border-radius:8px;padding:8px 10px;font-size:14px;white-space:pre-wrap;overflow-wrap:anywhere}
+.next{font-size:13px;display:flex;align-items:center;gap:6px;color:var(--muted)}
+.next.overdue{color:var(--due);font-weight:600}
+.dot{width:8px;height:8px;border-radius:50%;background:currentColor;flex:none}
+.card-actions{display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:10px}
+.confirm{display:flex;gap:6px;align-items:center;font-size:13px;color:var(--due);flex-wrap:wrap}
+
+.group{display:grid;gap:8px}
+.group h2{font-size:.85rem;font-family:var(--f-body);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:flex;gap:8px;align-items:center}
+.group.overdue h2{color:var(--due)}
+.task{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.task.overdue{border-left:4px solid var(--due)}
+.task.today{border-left:4px solid var(--accent)}
+.task.done{opacity:.6}
+.task.done .t-title{text-decoration:line-through}
+.check{width:22px;height:22px;border-radius:6px;border:2px solid var(--line);background:var(--surface);display:grid;place-items:center;padding:0;margin-top:2px}
+.check:hover{border-color:var(--accent)}
+.check.on{background:var(--ok);border-color:var(--ok);color:var(--surface)}
+.t-title{font-weight:600;overflow-wrap:anywhere}
+.t-meta{font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 12px}
+.t-when{font-family:var(--f-mono);font-size:12px}
+.task.overdue .t-when{color:var(--due);font-weight:500}
+.t-notes{font-size:13px;margin-top:4px;white-space:pre-wrap;overflow-wrap:anywhere}
+.t-actions{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+@media (max-width:520px){.task{grid-template-columns:auto minmax(0,1fr)}.t-actions{grid-column:2;justify-content:flex-start}}
+
+.empty{border:1.5px dashed var(--line);border-radius:12px;padding:36px 20px;text-align:center;display:grid;gap:10px;justify-items:center;color:var(--muted)}
+.empty h3{color:var(--fg);font-size:1.15rem}
+.empty p{margin:0;max-width:44ch}
+
+/* tags */
+.c0{--c:var(--t0)}.c1{--c:var(--t1)}.c2{--c:var(--t2)}.c3{--c:var(--t3)}.c4{--c:var(--t4)}.c5{--c:var(--t5)}
+.tagbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tagbar:empty{display:none}
+.tagbar .lbl{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-right:2px}
+.tag{display:inline-flex;align-items:center;gap:6px;border:1px solid color-mix(in srgb,var(--c,var(--t0)) 40%,transparent);background:color-mix(in srgb,var(--c,var(--t0)) 13%,var(--surface));color:var(--fg);border-radius:99px;padding:3px 10px;font-size:13px;font-weight:500;line-height:1.3;font-family:var(--f-body)}
+.tag::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--c,var(--t0));flex:none}
+button.tag{cursor:pointer}
+button.tag:hover{border-color:var(--c,var(--t0))}
+button.tag[aria-pressed="true"]{background:var(--c,var(--t0));color:var(--surface);border-color:var(--c,var(--t0))}
+button.tag[aria-pressed="true"]::before{background:var(--surface)}
+.tag .n{font-family:var(--f-mono);font-size:11px;opacity:.8}
+.card-tags{display:flex;flex-wrap:wrap;gap:5px}
+.card-tags .tag{font-size:12px;padding:2px 9px}
+.tag-new{display:flex;gap:6px}
+.tag-new input{flex:1;min-width:0}
+.swatches{display:flex;gap:5px}
+.sw{width:22px;height:22px;border-radius:50%;border:2px solid var(--surface);outline:1px solid var(--line);background:var(--c);padding:0;cursor:pointer}
+.sw[aria-pressed="true"]{outline:2px solid var(--fg)}
+.mtag{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px}
+.mtag-row2{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.assign{grid-column:1/-1;display:grid;gap:8px;border-top:1px solid var(--line);padding-top:10px}
+.assign-list{display:grid;gap:2px;max-height:260px;overflow-y:auto}
+.chk{display:flex;gap:10px;align-items:center;font-size:14px;padding:5px 4px;border-radius:6px;cursor:pointer}
+.chk:hover{background:var(--sunk)}
+.chk input{width:18px;height:18px;flex:none;accent-color:var(--accent)}
+.chk .meta{color:var(--muted);font-size:12px;margin-left:auto;text-align:right}
+
+/* sheet */
+.scrim{position:fixed;inset:0;background:rgba(10,25,22,.45);z-index:40;display:flex;justify-content:flex-end}
+.sheet{background:var(--bg);width:min(480px,100%);height:100%;overflow-y:auto;box-shadow:var(--shadow);padding-block:calc(20px + env(safe-area-inset-top,0px)) calc(24px + env(safe-area-inset-bottom,0px));padding-left:20px;padding-right:max(20px,env(safe-area-inset-right,0px));display:grid;gap:14px;align-content:start}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sheet h2{font-size:1.3rem}
+.field{display:grid;gap:5px}
+.field label,.field .lbl{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.field .req{color:var(--due)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:420px){.two{grid-template-columns:1fr}}
+.presets{display:flex;flex-wrap:wrap;gap:6px}
+.presets button{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:99px;padding:4px 11px;font-size:13px}
+.presets button:hover{border-color:var(--accent)}
+.err{color:var(--due);font-size:13px;margin:0}
+.sheet-foot{display:flex;gap:8px;justify-content:flex-end;padding-top:6px}
+
+/* reminders */
+.alerts{position:fixed;right:max(16px,calc(env(safe-area-inset-right,0px) + 16px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:50;display:grid;gap:10px;width:min(360px,calc(100% - 32px))}
+.alert{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--due);border-radius:10px;box-shadow:var(--shadow);padding:12px 14px;display:grid;gap:8px;animation:pop .25s ease-out}
+.alert .eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--due);font-weight:600}
+.alert strong{overflow-wrap:anywhere}
+.alert .sub{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.alert .acts{display:flex;gap:6px;flex-wrap:wrap}
+.toast{background:var(--fg);color:var(--bg);border-radius:8px;padding:9px 14px;font-size:14px;justify-self:end;animation:pop .2s ease-out}
+@keyframes pop{from{transform:translateY(8px);opacity:.4}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.alert,.toast{animation:none}}
+.banner{background:var(--due-soft);color:var(--fg);border-radius:10px;padding:10px 14px;font-size:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.banner b{color:var(--due)}
+.status{font-size:13px;color:var(--muted)}
+
+/* backup footer (standalone build) */
+.backup{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between;border-top:1px solid var(--line);padding-top:16px;font-size:13px;color:var(--muted)}
+.backup .acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.backup select{width:auto;padding:5px 8px;font-size:13px}
+</style>
+<script src="js/local-db.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Clinic Outreach Desk</h1>
+      <p>Clinic owners you've spoken with, and the follow-ups you owe them.</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" id="btnTags" type="button">Tags</button>
+      <button class="btn" id="btnAddTask" type="button">+ Reminder</button>
+      <button class="btn primary" id="btnAddClinic" type="button">+ Add clinic</button>
+    </div>
+  </header>
+
+  <div id="statusLine" class="status">Loading your clinics…</div>
+
+  <section class="stats" aria-label="Summary">
+    <div class="stat"><b id="sClinics">0</b><span>Clinics</span></div>
+    <div class="stat"><b id="sDental">0 / 0</b><span>Dental / other</span></div>
+    <div class="stat"><b id="sToday">0</b><span>Due today</span></div>
+    <div class="stat" id="sOverdueBox"><b id="sOverdue">0</b><span>Overdue</span></div>
+  </section>
+
+  <div id="banner" class="banner" hidden></div>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tabClinics" aria-selected="true" type="button">Clinics <span class="count" id="cClinics">0</span></button>
+    <button class="tab" role="tab" id="tabTasks" aria-selected="false" type="button">Follow-ups <span class="count" id="cTasks">0</span></button>
+  </nav>
+
+  <section id="viewClinics" style="display:grid;gap:14px">
+    <div class="toolbar">
+      <input type="search" id="q" placeholder="Search clinic, person, location, phone, remarks…" aria-label="Search clinics">
+      <div class="seg" role="group" aria-label="Filter by type">
+        <button type="button" data-f="all" aria-pressed="true">All</button>
+        <button type="button" data-f="Dental" aria-pressed="false">Dental</button>
+        <button type="button" data-f="Other" aria-pressed="false">Other</button>
+      </div>
+      <select id="sort" aria-label="Sort clinics" style="width:auto">
+        <option value="recent">Recently updated</option>
+        <option value="name">Clinic name A–Z</option>
+        <option value="next">Next follow-up</option>
+      </select>
+    </div>
+    <div class="tagbar" id="tagBar" aria-label="Filter by tag"></div>
+    <div id="clinicList" class="grid"></div>
+  </section>
+
+  <section id="viewTasks" hidden style="display:grid;gap:18px">
+    <div id="taskList" style="display:grid;gap:18px"></div>
+  </section>
+
+  <footer class="backup">
+    <span>Data is saved in this browser only. Export a backup regularly, and import it to move to another device.</span>
+    <div class="acts">
+      <button class="btn small" type="button" id="btnExport">Export backup</button>
+      <select id="importMode" aria-label="Import mode"><option value="merge">Import: merge</option><option value="replace">Import: replace all</option></select>
+      <button class="btn small" type="button" id="btnImport">Import backup</button>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+    </div>
+  </footer>
+</div>
+
+<div id="sheetRoot"></div>
+<div class="alerts" id="alerts" aria-live="assertive"></div>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const state = { clinics: [], tasks: [], tags: [], tagFilter: new Set(), filter: "all", q: "", sort: "recent", tab: "clinics", confirmDel: null, db: null, ready:false };
+  const alerted = new Set();
+
+  try { const t = localStorage.getItem("cod-tab"); if (t) state.tab = t; } catch(e) {}
+
+  /* ---------- time helpers (stored as epoch ms; shown in the viewer's local time) ---------- */
+  const pad = n => String(n).padStart(2,"0");
+  const toLocalInput = ms => { const d = new Date(ms); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+  const fromLocalInput = v => v ? new Date(v).getTime() : NaN;
+  const dayStart = ms => { const d = new Date(ms); d.setHours(0,0,0,0); return d.getTime(); };
+  const fmtWhen = ms => {
+    const d = new Date(ms), now = Date.now();
+    const diffDays = Math.round((dayStart(ms) - dayStart(now)) / 864e5);
+    const time = d.toLocaleTimeString([], {hour:"numeric", minute:"2-digit"});
+    if (diffDays === 0) return `Today, ${time}`;
+    if (diffDays === 1) return `Tomorrow, ${time}`;
+    if (diffDays === -1) return `Yesterday, ${time}`;
+    return d.toLocaleDateString([], {weekday:"short", day:"numeric", month:"short", year: d.getFullYear()!==new Date().getFullYear() ? "numeric": undefined}) + `, ${time}`;
+  };
+  const isoWithOffset = ms => {
+    const d = new Date(ms), off = -d.getTimezoneOffset(), sign = off>=0?"+":"-", a=Math.abs(off);
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00${sign}${pad(Math.floor(a/60))}:${pad(a%60)}`;
+  };
+  const presetMs = key => {
+    const d = new Date();
+    if (key === "1h") return Date.now() + 36e5;
+    if (key === "3h") return Date.now() + 3*36e5;
+    if (key === "tom") { d.setDate(d.getDate()+1); d.setHours(10,0,0,0); return d.getTime(); }
+    if (key === "3d") { d.setDate(d.getDate()+3); d.setHours(10,0,0,0); return d.getTime(); }
+    if (key === "1w") { d.setDate(d.getDate()+7); d.setHours(10,0,0,0); return d.getTime(); }
+    return Date.now();
+  };
+
+  /* ---------- toasts & chime ---------- */
+  let audioCtx = null;
+  document.addEventListener("pointerdown", () => { try { audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)(); } catch(e){} }, {once:true});
+  const chime = () => { try { if(!audioCtx) return; const t = audioCtx.currentTime; [880,1175].forEach((f,i)=>{ const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.frequency.value=f; o.type="sine"; g.gain.setValueAtTime(0.0001,t+i*.18); g.gain.exponentialRampToValueAtTime(0.18,t+i*.18+.02); g.gain.exponentialRampToValueAtTime(0.0001,t+i*.18+.5); o.connect(g).connect(audioCtx.destination); o.start(t+i*.18); o.stop(t+i*.18+.55); }); } catch(e){} };
+  const toast = msg => { const el = document.createElement("div"); el.className="toast"; el.textContent = msg; $("#alerts").appendChild(el); setTimeout(()=>el.remove(), 2600); };
+
+  /* ---------- db ---------- */
+  const write = async (fn, okMsg) => {
+    if (!state.db) { toast("Saving isn't available in this view."); return false; }
+    try { await fn(state.db); if (okMsg) toast(okMsg); return true; }
+    catch(e) {
+      if (e && e.code === "unavailable") { try { await new Promise(r=>setTimeout(r, 400+Math.random()*600)); await fn(state.db); if (okMsg) toast(okMsg); return true; } catch(e2){} }
+      toast(e && e.code === "quota_exceeded" ? "Storage is full. Delete some old entries and try again." : e && e.code === "invalid_argument" ? "You don't have permission to change this list." : "Couldn't save. Check your connection and try again.");
+      return false;
+    }
+  };
+
+  (async () => {
+    let db = null;
+    try { db = await claude.use("db"); } catch(e) {}
+    if (!db) { $("#statusLine").textContent = "Saving is unavailable here. Sign in to claude.ai and open this page to use it."; render(); return; }
+    state.db = db;
+    let gotC=false, gotT=false;
+    const done = () => { if (gotC && gotT) { state.ready=true; $("#statusLine").hidden = true; } };
+    db.collection("clinics").onSnapshot(s => { state.clinics = s.docs.map(d => ({id:d.id, ...d.data()})); gotC=true; done(); render(); }, () => { $("#statusLine").textContent = "Lost connection to your saved clinics. Reload the page."; $("#statusLine").hidden=false; });
+    db.collection("tags").onSnapshot(s => { state.tags = s.docs.map(d => ({id:d.id, ...d.data()})); render(); }, () => {});
+    db.collection("tasks").onSnapshot(s => { state.tasks = s.docs.map(d => ({id:d.id, ...d.data()})); gotT=true; done(); render(); checkDue(); }, () => {});
+  })();
+
+  /* ---------- derived ---------- */
+  const clinicById = id => state.clinics.find(c => c.id === id);
+  const tagById = id => state.tags.find(t => t.id === id);
+  const sortedTags = () => [...state.tags].sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+  const tagCounts = () => { const m = {}; state.clinics.forEach(c => (c.tagIds||[]).forEach(id => { m[id] = (m[id]||0) + 1; })); return m; };
+  const tagCls = t => "c" + ((+t.color||0) % 6);
+  const openTasks = () => state.tasks.filter(t => !t.done);
+  const nextTaskFor = id => openTasks().filter(t => t.clinicId === id).sort((a,b)=>a.dueMs-b.dueMs)[0];
+
+  /* ---------- render ---------- */
+  function render(){
+    const now = Date.now(), todayEnd = dayStart(now) + 864e5;
+    const open = openTasks();
+    const overdue = open.filter(t => t.dueMs <= now);
+    const today = open.filter(t => t.dueMs > now && t.dueMs < todayEnd);
+    const dental = state.clinics.filter(c => c.type === "Dental").length;
+
+    $("#sClinics").textContent = state.clinics.length;
+    $("#sDental").textContent = `${dental} / ${state.clinics.length - dental}`;
+    $("#sToday").textContent = today.length;
+    $("#sOverdue").textContent = overdue.length;
+    $("#sOverdueBox").classList.toggle("alert", overdue.length > 0);
+    $("#cClinics").textContent = state.clinics.length;
+    $("#cTasks").textContent = open.length;
+    $("#cTasks").classList.toggle("hot", overdue.length > 0);
+
+    const b = $("#banner");
+    if (overdue.length) { b.hidden=false; b.innerHTML = `<b>${overdue.length} follow-up${overdue.length>1?"s":""} overdue.</b> <span>Oldest: ${esc(overdue.sort((a,b)=>a.dueMs-b.dueMs)[0].title)}</span> <button class="btn small" type="button" data-act="goTasks">Open follow-ups</button>`; }
+    else b.hidden = true;
+
+    $("#tabClinics").setAttribute("aria-selected", state.tab==="clinics");
+    $("#tabTasks").setAttribute("aria-selected", state.tab==="tasks");
+    $("#viewClinics").hidden = state.tab!=="clinics";
+    $("#viewTasks").hidden = state.tab!=="tasks";
+    document.querySelectorAll(".seg button").forEach(x => x.setAttribute("aria-pressed", x.dataset.f===state.filter));
+
+    renderTagBar(); renderClinics(); renderTasks(); renderManageList();
+  }
+
+  /* ---------- tags ---------- */
+  function renderTagBar(){
+    const el = $("#tagBar");
+    for (const id of [...state.tagFilter]) if (!tagById(id)) state.tagFilter.delete(id);
+    if (!state.tags.length) { el.innerHTML = state.clinics.length ? `<span class="lbl">Tags</span><button class="btn small ghost" type="button" data-act="manageTags">+ Create a tag</button>` : ""; return; }
+    const counts = tagCounts();
+    el.innerHTML = `<span class="lbl">Tags</span>` +
+      sortedTags().map(t => `<button type="button" class="tag ${tagCls(t)}" data-act="tagFilter" data-id="${t.id}" aria-pressed="${state.tagFilter.has(t.id)}">${esc(t.name)} <span class="n">${counts[t.id]||0}</span></button>`).join("") +
+      (state.tagFilter.size ? `<button class="btn small ghost" type="button" data-act="clearTags">Clear</button>` : "") +
+      `<button class="btn small ghost" type="button" data-act="manageTags">Manage tags</button>`;
+  }
+  const cardTags = c => {
+    const ts = (c.tagIds||[]).map(tagById).filter(Boolean).sort((a,b)=>String(a.name).localeCompare(String(b.name)));
+    return ts.length ? `<div class="card-tags">${ts.map(t => `<button type="button" class="tag ${tagCls(t)}" data-act="tagOnly" data-id="${t.id}" title="Show only ${esc(t.name)}">${esc(t.name)}</button>`).join("")}</div>` : "";
+  };
+  async function createTag(raw){
+    const name = String(raw||"").trim().replace(/\s+/g," ");
+    if (!name) { toast("Type a tag name first."); return null; }
+    const ex = state.tags.find(t => String(t.name).toLowerCase() === name.toLowerCase());
+    if (ex) return ex.id;
+    if (!state.db) { toast("Saving isn't available in this view."); return null; }
+    const ref = state.db.collection("tags").doc();
+    const color = state.tags.length % 6;
+    const ok = await write(() => ref.set({ name, color, createdAt: Date.now() }), `Tag “${name}” created`);
+    if (!ok) return null;
+    if (!tagById(ref.id)) state.tags = [...state.tags, { id: ref.id, name, color }];
+    return ref.id;
+  }
+  async function setClinicTag(cid, tid, on){
+    const c = clinicById(cid); if (!c) return;
+    const ids = new Set(c.tagIds||[]); on ? ids.add(tid) : ids.delete(tid);
+    await write(db => db.doc("clinics/"+cid).update({ tagIds: [...ids] }));
+  }
+  async function bulkTag(tid, on){
+    const targets = state.clinics.filter(c => (c.tagIds||[]).includes(tid) !== on);
+    if (!targets.length) { toast(on ? "Every clinic already has this tag." : "No clinics have this tag."); return; }
+    let n = 0;
+    for (const c of targets) { const ids = new Set(c.tagIds||[]); on ? ids.add(tid) : ids.delete(tid); if (await write(db => db.doc("clinics/"+c.id).update({ tagIds: [...ids] }))) n++; }
+    toast(`${on ? "Added to" : "Removed from"} ${n} clinic${n===1?"":"s"}`);
+  }
+  async function deleteTag(tid){
+    for (const c of state.clinics.filter(c => (c.tagIds||[]).includes(tid))) await write(db => db.doc("clinics/"+c.id).update({ tagIds: (c.tagIds||[]).filter(x => x !== tid) }));
+    state.tagFilter.delete(tid);
+    await write(db => db.doc("tags/"+tid).delete(), "Tag deleted");
+  }
+  const mState = { open: null, confirm: null };
+  function renderManageList(){
+    const el = document.getElementById("mList"); if (!el) return;
+    const ae = document.activeElement;
+    if (ae && el.contains(ae) && ae.dataset && ae.dataset.rename) return; // don't disturb a rename in progress
+    const scroller = el.querySelector(".assign-list"), keep = scroller ? scroller.scrollTop : 0;
+    if (!state.tags.length) { el.innerHTML = `<div class="empty"><h3>No tags yet</h3><p>Create tags like “Hot lead”, “Demo done” or “Visit pending”, then use them to filter your clinics.</p></div>`; return; }
+    const counts = tagCounts();
+    const clinics = [...state.clinics].sort((a,b)=>String(a.clinicName).localeCompare(String(b.clinicName)));
+    el.innerHTML = sortedTags().map(t => {
+      const n = counts[t.id]||0, open = mState.open===t.id, conf = mState.confirm===t.id;
+      return `<div class="mtag">
+        <input type="text" id="mName-${t.id}" data-rename="${t.id}" value="${esc(t.name)}" maxlength="30" aria-label="Tag name">
+        <span class="tag ${tagCls(t)}">${n} clinic${n===1?"":"s"}</span>
+        <div class="mtag-row2">
+          <div class="swatches">${[0,1,2,3,4,5].map(i => `<button type="button" class="sw c${i}" data-recolor="${t.id}" data-color="${i}" aria-pressed="${(+t.color||0)%6===i}" aria-label="Colour ${i+1}"></button>`).join("")}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">${conf
+            ? `<span class="confirm">Remove from ${n} clinic${n===1?"":"s"} and delete? <button class="btn small danger" type="button" data-mdel-yes="${t.id}">Delete</button><button class="btn small ghost" type="button" data-mdel-no="1">Keep</button></span>`
+            : `<button class="btn small" type="button" data-massign="${t.id}" aria-expanded="${open}">${open ? "Done" : "Assign to clinics"}</button><button class="btn small ghost" type="button" data-mdel="${t.id}">Delete</button>`}</div>
+        </div>
+        ${open ? `<div class="assign">
+          ${clinics.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn small" type="button" data-mall="${t.id}">Add to all clinics</button><button class="btn small ghost" type="button" data-mnone="${t.id}">Remove from all</button></div>
+          <div class="assign-list">${clinics.map(c => `<label class="chk"><input type="checkbox" id="mA-${t.id}-${c.id}" data-assign-clinic="${c.id}" data-tag="${t.id}" ${(c.tagIds||[]).includes(t.id)?"checked":""}><span>${esc(c.clinicName)}</span><span class="meta">${esc(c.location||"")}</span></label>`).join("")}</div>` : `<p class="status" style="margin:0">Add a clinic first to assign this tag.</p>`}
+        </div>` : ""}
+      </div>`;
+    }).join("");
+    const ns = el.querySelector(".assign-list"); if (ns) ns.scrollTop = keep;
+  }
+  function openTagSheet(){
+    mState.open = null; mState.confirm = null;
+    $("#sheetRoot").innerHTML = `<div class="scrim" data-act="scrim"><div class="sheet" id="tagSheet">
+      <div class="sheet-head"><h2>Tags</h2><button class="btn ghost small" type="button" data-act="close">Close</button></div>
+      <p class="status" style="margin:0">Tags are shared across all your clinics. Rename or recolour a tag here and every clinic using it updates.</p>
+      <div class="tag-new"><input id="mNewTag" placeholder="New tag, e.g. Hot lead" maxlength="30" aria-label="New tag name"><button class="btn primary small" type="button" id="mNewTagBtn">Create tag</button></div>
+      <div id="mList" style="display:grid;gap:10px"></div>
+    </div></div>`;
+    renderManageList();
+    const add = async () => { const id = await createTag($("#mNewTag").value); if (id) { $("#mNewTag").value = ""; mState.open = id; renderManageList(); } };
+    $("#mNewTagBtn").onclick = add;
+    $("#mNewTag").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); add(); } });
+    $("#mNewTag").focus();
+    const sheet = $("#tagSheet");
+    sheet.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.dataset.rename) { e.preventDefault(); e.target.blur(); } });
+    sheet.addEventListener("click", async e => {
+      const t = e.target; let b;
+      if ((b = t.closest("[data-recolor]"))) { await write(db => db.doc("tags/"+b.dataset.recolor).update({ color: +b.dataset.color })); return; }
+      if ((b = t.closest("[data-massign]"))) { mState.open = mState.open===b.dataset.massign ? null : b.dataset.massign; mState.confirm = null; renderManageList(); return; }
+      if ((b = t.closest("[data-mdel]"))) { mState.confirm = b.dataset.mdel; renderManageList(); return; }
+      if (t.closest("[data-mdel-no]")) { mState.confirm = null; renderManageList(); return; }
+      if ((b = t.closest("[data-mdel-yes]"))) { mState.confirm = null; await deleteTag(b.dataset.mdelYes); return; }
+      if ((b = t.closest("[data-mall]"))) { await bulkTag(b.dataset.mall, true); return; }
+      if ((b = t.closest("[data-mnone]"))) { await bulkTag(b.dataset.mnone, false); return; }
+    });
+    sheet.addEventListener("change", async e => {
+      const t = e.target;
+      if (t.dataset.assignClinic) { await setClinicTag(t.dataset.assignClinic, t.dataset.tag, t.checked); return; }
+      if (t.dataset.rename) {
+        const id = t.dataset.rename, tag = tagById(id); if (!tag) return;
+        const name = t.value.trim().replace(/\s+/g," ");
+        if (!name) { t.value = tag.name; toast("A tag needs a name."); return; }
+        if (state.tags.some(x => x.id !== id && String(x.name).toLowerCase() === name.toLowerCase())) { t.value = tag.name; toast(`A tag called “${name}” already exists.`); return; }
+        if (name !== tag.name) await write(db => db.doc("tags/"+id).update({ name }), "Tag renamed");
+      }
+    });
+  }
+
+  function renderClinics(){
+    const el = $("#clinicList");
+    if (!state.clinics.length) {
+      el.innerHTML = `<div class="empty" style="grid-column:1/-1"><h3>${state.ready||!state.db ? "No clinics yet" : "Loading…"}</h3><p>Each clinic you add shows its owner, phone, email, location and your remarks, with its next follow-up underneath.</p><button class="btn primary" type="button" data-act="addClinic">+ Add your first clinic</button></div>`;
+      return;
+    }
+    const q = state.q.trim().toLowerCase();
+    const tf = state.tagFilter;
+    let list = state.clinics.filter(c => (state.filter==="all" || c.type===state.filter) &&
+      (tf.size===0 || (c.tagIds||[]).some(id => tf.has(id))) &&
+      (!q || [c.clinicName,c.person,c.location,c.phone,c.email,c.remarks,c.typeOther, ...(c.tagIds||[]).map(id => (tagById(id)||{}).name)].some(v => String(v||"").toLowerCase().includes(q))));
+    if (state.sort==="name") list.sort((a,b)=>String(a.clinicName).localeCompare(String(b.clinicName)));
+    else if (state.sort==="next") list.sort((a,b)=>((nextTaskFor(a.id)||{}).dueMs ?? Infinity) - ((nextTaskFor(b.id)||{}).dueMs ?? Infinity));
+    else list.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+    if (!list.length) { el.innerHTML = `<div class="empty" style="grid-column:1/-1"><h3>No matches</h3><p>No clinics match your current search, type and tag filters.</p><button class="btn small" type="button" data-act="clearAll">Clear all filters</button></div>`; return; }
+
+    el.innerHTML = list.map(c => {
+      const nt = nextTaskFor(c.id);
+      const typeLabel = c.type==="Dental" ? "Dental" : (c.typeOther ? c.typeOther : "Other");
+      const ntHtml = nt ? `<div class="next ${nt.dueMs<=Date.now()?"overdue":""}"><span class="dot"></span>${esc(nt.title)} · <span class="mono">${esc(fmtWhen(nt.dueMs))}</span></div>` : `<div class="next">No follow-up set</div>`;
+      const conf = state.confirmDel===c.id
+        ? `<div class="confirm">Delete this clinic and its reminders? <button class="btn small danger" type="button" data-act="delClinicYes" data-id="${c.id}">Delete</button><button class="btn small ghost" type="button" data-act="delCancel">Keep</button></div>`
+        : `<button class="btn small" type="button" data-act="addTaskFor" data-id="${c.id}">+ Reminder</button><button class="btn small" type="button" data-act="editClinic" data-id="${c.id}">Edit</button><button class="btn small ghost" type="button" data-act="delClinic" data-id="${c.id}" style="margin-left:auto">Delete</button>`;
+      return `<article class="card">
+        <div class="card-head"><h3>${esc(c.clinicName)}</h3><span class="chip ${c.type==="Dental"?"dental":"other"}">${esc(typeLabel)}</span></div>
+        ${cardTags(c)}
+        <dl class="rows">
+          ${c.person?`<dt>Owner</dt><dd>${esc(c.person)}</dd>`:""}
+          ${c.phone?`<dt>Phone</dt><dd><a class="mono" href="tel:${esc(c.phone.replace(/[^\d+]/g,""))}" style="color:inherit">${esc(c.phone)}</a><button class="copy" type="button" data-copy="${esc(c.phone)}">Copy</button></dd>`:""}
+          ${c.email?`<dt>Email</dt><dd><span>${esc(c.email)}</span><button class="copy" type="button" data-copy="${esc(c.email)}">Copy</button></dd>`:""}
+          ${c.location?`<dt>Location</dt><dd>${esc(c.location)}</dd>`:""}
+        </dl>
+        ${c.remarks?`<div class="remarks">${esc(c.remarks)}</div>`:""}
+        ${ntHtml}
+        <div class="card-actions">${conf}</div>
+      </article>`;
+    }).join("");
+  }
+
+  function taskRow(t, cls){
+    const c = clinicById(t.clinicId);
+    const conf = state.confirmDel===t.id
+      ? `<div class="confirm">Delete? <button class="btn small danger" type="button" data-act="delTaskYes" data-id="${t.id}">Delete</button><button class="btn small ghost" type="button" data-act="delCancel">Keep</button></div>`
+      : (t.done ? `<button class="btn small ghost" type="button" data-act="delTask" data-id="${t.id}">Delete</button>`
+        : `<button class="btn small" type="button" data-act="snooze" data-id="${t.id}" data-by="1h">+1 hr</button><button class="btn small" type="button" data-act="snooze" data-id="${t.id}" data-by="tom">Tomorrow</button><button class="btn small ghost" type="button" data-act="editTask" data-id="${t.id}">Edit</button><button class="btn small ghost" type="button" data-act="delTask" data-id="${t.id}">Delete</button>`);
+    return `<div class="task ${cls}">
+      <button class="check ${t.done?"on":""}" type="button" data-act="toggle" data-id="${t.id}" aria-label="${t.done?"Mark not done":"Mark done"}">${t.done?"✓":""}</button>
+      <div style="min-width:0">
+        <div class="t-title">${esc(t.title)}</div>
+        <div class="t-meta"><span class="t-when">${esc(fmtWhen(t.dueMs))}</span>${c?`<span>${esc(c.clinicName)}${c.person?" · "+esc(c.person):""}</span>`:""}${c&&c.phone?`<span class="mono">${esc(c.phone)}</span>`:""}</div>
+        ${t.notes?`<div class="t-notes">${esc(t.notes)}</div>`:""}
+      </div>
+      <div class="t-actions">${conf}</div>
+    </div>`;
+  }
+
+  function renderTasks(){
+    const el = $("#taskList");
+    if (!state.tasks.length) {
+      el.innerHTML = `<div class="empty"><h3>No reminders yet</h3><p>Set a follow-up on any clinic, like “Call back about pricing, Friday 11am”. When it's due, an alert pops up here with a chime.</p><button class="btn primary" type="button" data-act="addTask">+ Set a reminder</button></div>`;
+      return;
+    }
+    const now = Date.now(), todayEnd = dayStart(now)+864e5, weekEnd = dayStart(now)+7*864e5;
+    const open = openTasks().sort((a,b)=>a.dueMs-b.dueMs);
+    const groups = [
+      ["Overdue","overdue", open.filter(t=>t.dueMs<=now)],
+      ["Today","today", open.filter(t=>t.dueMs>now && t.dueMs<todayEnd)],
+      ["Next 7 days","", open.filter(t=>t.dueMs>=todayEnd && t.dueMs<weekEnd)],
+      ["Later","", open.filter(t=>t.dueMs>=weekEnd)],
+      ["Done","done", state.tasks.filter(t=>t.done).sort((a,b)=>(b.doneAt||0)-(a.doneAt||0)).slice(0,20)],
+    ];
+    el.innerHTML = groups.filter(g=>g[2].length).map(([label,cls,items]) =>
+      `<div class="group ${cls}"><h2>${label} <span class="mono">${items.length}</span></h2>${items.map(t=>taskRow(t,cls)).join("")}</div>`).join("") ||
+      `<div class="empty"><h3>All caught up</h3><p>No open follow-ups.</p></div>`;
+  }
+
+  /* ---------- sheets (forms) ---------- */
+  function closeSheet(){ $("#sheetRoot").innerHTML = ""; }
+  function openClinicSheet(c){
+    const isEdit = !!c; c = c || {type:"Dental"};
+    $("#sheetRoot").innerHTML = `<div class="scrim" data-act="scrim"><form class="sheet" id="clinicForm" novalidate>
+      <div class="sheet-head"><h2>${isEdit?"Edit clinic":"Add clinic"}</h2><button class="btn ghost small" type="button" data-act="close">Close</button></div>
+      <div class="field"><label for="fName">Clinic name <span class="req">*</span></label><input id="fName" required value="${esc(c.clinicName)}" placeholder="e.g. Smile Care Dental"></div>
+      <div class="two">
+        <div class="field"><label for="fType">Clinic type</label><select id="fType"><option ${c.type==="Dental"?"selected":""}>Dental</option><option ${c.type==="Other"?"selected":""}>Other</option></select></div>
+        <div class="field" id="fOtherWrap" ${c.type==="Other"?"":"hidden"}><label for="fOther">Specialty</label><input id="fOther" value="${esc(c.typeOther)}" placeholder="e.g. Dermatology"></div>
+      </div>
+      <div class="field"><label for="fPerson">Person name</label><input id="fPerson" value="${esc(c.person)}" placeholder="e.g. Dr. Anitha Rao"></div>
+      <div class="two">
+        <div class="field"><label for="fPhone">Number</label><input id="fPhone" type="tel" inputmode="tel" value="${esc(c.phone)}" placeholder="+91 98xxx xxxxx"></div>
+        <div class="field"><label for="fEmail">Mail</label><input id="fEmail" type="email" value="${esc(c.email)}" placeholder="name@clinic.com"></div>
+      </div>
+      <div class="field"><label for="fLoc">Location</label><input id="fLoc" value="${esc(c.location)}" placeholder="Area, city"></div>
+      <div class="field"><span class="lbl">Tags</span>
+        <div class="presets" id="fTags"></div>
+        <div class="tag-new"><input id="fNewTag" placeholder="Create a new tag, e.g. Hot lead" maxlength="30" aria-label="New tag name"><button class="btn small" type="button" id="fNewTagBtn">Add tag</button></div>
+      </div>
+      <div class="field"><label for="fRemarks">Remarks</label><textarea id="fRemarks" rows="4" placeholder="What you discussed, interest level, objections…">${esc(c.remarks)}</textarea></div>
+      ${isEdit?"":`<div class="field"><span class="lbl">Follow-up reminder (optional)</span>
+        <input id="fTaskTitle" placeholder="e.g. Call back with quote">
+        <div class="presets">${[["1h","In 1 hr"],["tom","Tomorrow 10am"],["3d","In 3 days"],["1w","Next week"]].map(([k,l])=>`<button type="button" data-preset="${k}" data-target="fTaskDue">${l}</button>`).join("")}</div>
+        <input id="fTaskDue" type="datetime-local" aria-label="Reminder date and time"></div>`}
+      <p class="err" id="fErr" hidden></p>
+      <div class="sheet-foot"><button class="btn" type="button" data-act="close">Cancel</button><button class="btn primary" type="submit">${isEdit?"Save changes":"Save clinic"}</button></div>
+    </form></div>`;
+    $("#fType").addEventListener("change", e => { $("#fOtherWrap").hidden = e.target.value!=="Other"; });
+    const sel = new Set((c.tagIds||[]).filter(id => tagById(id)));
+    const drawPicker = () => { $("#fTags").innerHTML = sortedTags().map(t => `<button type="button" class="tag ${tagCls(t)}" data-pick="${t.id}" aria-pressed="${sel.has(t.id)}">${esc(t.name)}</button>`).join("") || `<span class="status">No tags yet. Create one below; it becomes available for every clinic.</span>`; };
+    drawPicker();
+    $("#fTags").addEventListener("click", e => { const b = e.target.closest("[data-pick]"); if (!b) return; const id = b.dataset.pick; sel.has(id) ? sel.delete(id) : sel.add(id); b.setAttribute("aria-pressed", sel.has(id)); });
+    const addNewTag = async () => { const id = await createTag($("#fNewTag").value); if (id) { sel.add(id); $("#fNewTag").value = ""; drawPicker(); } };
+    $("#fNewTagBtn").onclick = addNewTag;
+    $("#fNewTag").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); addNewTag(); } });
+    $("#fName").focus();
+    $("#clinicForm").addEventListener("submit", async e => {
+      e.preventDefault();
+      const name = $("#fName").value.trim();
+      const err = $("#fErr");
+      if (!name) { err.textContent = "Add the clinic name to save."; err.hidden=false; return; }
+      const email = $("#fEmail").value.trim();
+      if (email && !/^\S+@\S+\.\S+$/.test(email)) { err.textContent = "That email address looks incomplete."; err.hidden=false; return; }
+      const taskTitle = !isEdit ? $("#fTaskTitle").value.trim() : "";
+      const taskDue = !isEdit ? fromLocalInput($("#fTaskDue").value) : NaN;
+      if (!isEdit && (taskTitle || $("#fTaskDue").value) && (!taskTitle || isNaN(taskDue))) { err.textContent = "For a reminder, add both what to do and when."; err.hidden=false; return; }
+      const type = $("#fType").value;
+      const data = { clinicName:name, type, typeOther: type==="Other" ? $("#fOther").value.trim() : "", person:$("#fPerson").value.trim(), phone:$("#fPhone").value.trim(), email, location:$("#fLoc").value.trim(), remarks:$("#fRemarks").value.trim(), tagIds:[...sel].filter(id => tagById(id)), updatedAt:Date.now() };
+      const btn = e.submitter; if (btn) btn.disabled = true;
+      let ok;
+      if (isEdit) ok = await write(db => db.doc("clinics/"+c.id).update(data), "Clinic updated");
+      else {
+        data.createdAt = Date.now();
+        const ref = state.db ? state.db.collection("clinics").doc() : null;
+        ok = await write(() => ref.set(data), "Clinic saved");
+        if (ok && taskTitle) await write(db => db.collection("tasks").doc().set({ clinicId: ref.id, title: taskTitle, notes:"", dueMs: taskDue, dueAt: isoWithOffset(taskDue), done:false, createdAt: Date.now() }));
+      }
+      if (ok) closeSheet(); else if (btn) btn.disabled = false;
+    });
+  }
+
+  function openTaskSheet(t, presetClinicId){
+    const isEdit = !!t; t = t || { clinicId: presetClinicId || "", dueMs: presetMs("tom") };
+    if (!state.clinics.length) { toast("Add a clinic first, then set a reminder for it."); openClinicSheet(); return; }
+    const opts = [...state.clinics].sort((a,b)=>String(a.clinicName).localeCompare(String(b.clinicName)))
+      .map(c => `<option value="${c.id}" ${c.id===t.clinicId?"selected":""}>${esc(c.clinicName)}${c.person?" — "+esc(c.person):""}</option>`).join("");
+    $("#sheetRoot").innerHTML = `<div class="scrim" data-act="scrim"><form class="sheet" id="taskForm" novalidate>
+      <div class="sheet-head"><h2>${isEdit?"Edit reminder":"Set a reminder"}</h2><button class="btn ghost small" type="button" data-act="close">Close</button></div>
+      <div class="field"><label for="tClinic">Clinic</label><select id="tClinic"><option value="">Choose a clinic…</option>${opts}</select></div>
+      <div class="field"><label for="tTitle">What to do <span class="req">*</span></label><input id="tTitle" value="${esc(t.title)}" placeholder="e.g. Call back about demo, Send brochure"></div>
+      <div class="field"><label for="tDue">When <span class="req">*</span></label>
+        <div class="presets">${[["1h","In 1 hr"],["3h","In 3 hrs"],["tom","Tomorrow 10am"],["3d","In 3 days"],["1w","Next week"]].map(([k,l])=>`<button type="button" data-preset="${k}" data-target="tDue">${l}</button>`).join("")}</div>
+        <input id="tDue" type="datetime-local" value="${toLocalInput(t.dueMs)}"></div>
+      <div class="field"><label for="tNotes">Notes</label><textarea id="tNotes" rows="3" placeholder="Anything to remember for this call">${esc(t.notes)}</textarea></div>
+      <p class="err" id="tErr" hidden></p>
+      <div class="sheet-foot"><button class="btn" type="button" data-act="close">Cancel</button><button class="btn primary" type="submit">${isEdit?"Save reminder":"Set reminder"}</button></div>
+    </form></div>`;
+    $("#tTitle").focus();
+    $("#taskForm").addEventListener("submit", async e => {
+      e.preventDefault();
+      const clinicId = $("#tClinic").value, title = $("#tTitle").value.trim(), dueMs = fromLocalInput($("#tDue").value), err=$("#tErr");
+      if (!clinicId) { err.textContent="Choose which clinic this reminder is for."; err.hidden=false; return; }
+      if (!title) { err.textContent="Describe what you need to do."; err.hidden=false; return; }
+      if (isNaN(dueMs)) { err.textContent="Pick a date and time."; err.hidden=false; return; }
+      const data = { clinicId, title, notes:$("#tNotes").value.trim(), dueMs, dueAt: isoWithOffset(dueMs) };
+      const btn = e.submitter; if (btn) btn.disabled = true;
+      alerted.delete(t.id);
+      const ok = isEdit ? await write(db => db.doc("tasks/"+t.id).update(data), "Reminder updated")
+                        : await write(db => db.collection("tasks").doc().set({ ...data, done:false, createdAt:Date.now() }), `Reminder set for ${fmtWhen(dueMs)}`);
+      if (ok) closeSheet(); else if (btn) btn.disabled=false;
+    });
+  }
+
+  /* ---------- reminder engine ---------- */
+  function checkDue(){
+    if (!state.ready) return;
+    const now = Date.now();
+    const due = openTasks().filter(t => t.dueMs <= now && !alerted.has(t.id));
+    let fresh = false;
+    due.forEach(t => {
+      alerted.add(t.id);
+      const c = clinicById(t.clinicId);
+      const box = document.createElement("div");
+      box.className = "alert"; box.dataset.task = t.id;
+      box.innerHTML = `<div class="eyebrow">Reminder · ${esc(fmtWhen(t.dueMs))}</div><strong>${esc(t.title)}</strong>
+        <div class="sub">${c?esc(c.clinicName):""}${c&&c.person?" · "+esc(c.person):""}${c&&c.phone?` · <span class="mono">${esc(c.phone)}</span>`:""}</div>
+        <div class="acts"><button class="btn small primary" type="button" data-act="toggle" data-id="${t.id}">Done</button><button class="btn small" type="button" data-act="snooze" data-id="${t.id}" data-by="1h">Snooze 1 hr</button><button class="btn small" type="button" data-act="snooze" data-id="${t.id}" data-by="tom">Tomorrow</button><button class="btn small ghost" type="button" data-act="dismiss">Dismiss</button></div>`;
+      $("#alerts").appendChild(box);
+      if (now - t.dueMs < 10*60*1000) fresh = true;
+    });
+    // only chime for reminders that just came due, not a backlog on page load
+    if (fresh) chime();
+  }
+  setInterval(() => { checkDue(); render(); }, 30000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) { checkDue(); render(); } });
+
+  /* ---------- events ---------- */
+  const setTab = t => { state.tab = t; try { localStorage.setItem("cod-tab", t); } catch(e) {} render(); };
+  $("#tabClinics").onclick = () => setTab("clinics");
+  $("#tabTasks").onclick = () => setTab("tasks");
+  $("#btnAddClinic").onclick = () => openClinicSheet();
+  $("#btnAddTask").onclick = () => openTaskSheet();
+  $("#btnTags").onclick = () => openTagSheet();
+  $("#q").addEventListener("input", e => { state.q = e.target.value; renderClinics(); });
+  $("#sort").addEventListener("change", e => { state.sort = e.target.value; renderClinics(); });
+  document.querySelectorAll(".seg button").forEach(b => b.onclick = () => { state.filter = b.dataset.f; render(); });
+  document.addEventListener("keydown", e => { if (e.key==="Escape" && $("#sheetRoot").innerHTML) closeSheet(); });
+
+  document.addEventListener("click", async e => {
+    const pre = e.target.closest("[data-preset]");
+    if (pre) { const inp = document.getElementById(pre.dataset.target); if (inp) inp.value = toLocalInput(presetMs(pre.dataset.preset)); return; }
+    const cp = e.target.closest("[data-copy]");
+    if (cp) { try { await navigator.clipboard.writeText(cp.dataset.copy); toast("Copied"); } catch(err) { const r=document.createRange(); r.selectNodeContents(cp.previousElementSibling); const s=getSelection(); s.removeAllRanges(); s.addRange(r); toast("Selected — press Ctrl/Cmd+C"); } return; }
+    const a = e.target.closest("[data-act]"); if (!a) return;
+    const act = a.dataset.act, id = a.dataset.id;
+    if (act==="scrim") { if (e.target===a) closeSheet(); return; }
+    if (act==="close") return closeSheet();
+    if (act==="addClinic") return openClinicSheet();
+    if (act==="addTask") return openTaskSheet();
+    if (act==="goTasks") return setTab("tasks");
+    if (act==="manageTags") return openTagSheet();
+    if (act==="tagFilter") { state.tagFilter.has(id) ? state.tagFilter.delete(id) : state.tagFilter.add(id); return render(); }
+    if (act==="tagOnly") { state.tagFilter = new Set([id]); state.tab = "clinics"; window.scrollTo({top:0, behavior:"smooth"}); return render(); }
+    if (act==="clearTags") { state.tagFilter.clear(); return render(); }
+    if (act==="clearAll") { state.tagFilter.clear(); state.filter = "all"; state.q = ""; $("#q").value = ""; return render(); }
+    if (act==="editClinic") return openClinicSheet(clinicById(id));
+    if (act==="addTaskFor") return openTaskSheet(null, id);
+    if (act==="editTask") return openTaskSheet(state.tasks.find(t=>t.id===id));
+    if (act==="delClinic"||act==="delTask") { state.confirmDel = id; return render(); }
+    if (act==="delCancel") { state.confirmDel = null; return render(); }
+    if (act==="dismiss") { a.closest(".alert")?.remove(); return; }
+    if (act==="delClinicYes") {
+      state.confirmDel = null;
+      const ok = await write(db => db.doc("clinics/"+id).delete(), "Clinic deleted");
+      if (ok) for (const t of state.tasks.filter(t=>t.clinicId===id)) await write(db => db.doc("tasks/"+t.id).delete());
+      return;
+    }
+    if (act==="delTaskYes") { state.confirmDel=null; return write(db => db.doc("tasks/"+id).delete(), "Reminder deleted"); }
+    if (act==="toggle") {
+      const t = state.tasks.find(x=>x.id===id); if (!t) return;
+      document.querySelectorAll(`.alert[data-task="${id}"]`).forEach(x=>x.remove());
+      return write(db => db.doc("tasks/"+id).update({ done: !t.done, doneAt: !t.done ? Date.now() : null }), !t.done ? "Marked done" : "Reopened");
+    }
+    if (act==="snooze") {
+      const ms = presetMs(a.dataset.by);
+      document.querySelectorAll(`.alert[data-task="${id}"]`).forEach(x=>x.remove());
+      alerted.delete(id);
+      return write(db => db.doc("tasks/"+id).update({ dueMs: ms, dueAt: isoWithOffset(ms) }), `Snoozed to ${fmtWhen(ms)}`);
+    }
+  });
+
+  render();
+})();
+</script>
+
+<script>
+(() => {
+  const B = window.ClinicDeskBackup;
+  const foot = document.querySelector(".backup");
+  if (!B) { foot.hidden = true; return; }
+  document.getElementById("btnExport").onclick = () => B.exportJSON();
+  document.getElementById("btnImport").onclick = () => document.getElementById("importFile").click();
+  document.getElementById("importFile").addEventListener("change", async e => {
+    const f = e.target.files[0]; if (!f) return;
+    const mode = document.getElementById("importMode").value;
+    try { await B.importJSON(f, mode); alert("Backup imported."); }
+    catch (err) { alert(err.message || "Couldn't read that file."); }
+    e.target.value = "";
+  });
+})();
+</script>
+</body>
+</html>
