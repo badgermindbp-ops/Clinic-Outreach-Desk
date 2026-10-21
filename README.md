@@ -11,7 +11,7 @@ A simple, single-page tracker for clinic owners you've spoken with. Save each cl
 - **Alerts**: when a reminder comes due, a pop-up appears with a chime. From the pop-up you can mark it done, snooze it 1 hour or move it to tomorrow
 - **Follow-ups view**: reminders grouped into Overdue, Today, Next 7 days, Later and Done
 - **Light and dark themes**: follows your system setting. Works on phone and desktop
-- **Backup**: export all data to a JSON file, and import it on another device or browser
+- **Backup**: the **Backup** button at the top exports all data to a JSON file and imports it on another device or browser
 
 ## Run it
 
@@ -28,7 +28,7 @@ There's no build step and nothing to install.
 
 All data is saved in your browser's `localStorage` on the device you use. Nothing is sent to a server. This means:
 
-- Data doesn't sync between devices or browsers automatically. Use **Export backup** and **Import backup** at the bottom of the page to move it.
+- Data doesn't sync between devices or browsers automatically. Use the **Backup** button at the top of the page to export and import it.
 - Clearing your browser's site data deletes it, so export a backup regularly.
 - Reminders alert you only while the page is open in a tab.
 
@@ -36,10 +36,10 @@ All data is saved in your browser's `localStorage` on the device you use. Nothin
 
 ```
 index.html        The app: markup, styles and logic
-js/local-db.js    Small storage layer (localStorage) plus export/import
+local-db.js       Small storage layer (localStorage)
 ```
 
-`js/local-db.js` provides a minimal document-store API (`collection().onSnapshot`, `doc().set / update / delete`). To add cloud sync later (for example Firebase Firestore or Supabase), replace this file with an adapter that exposes the same methods. The app code doesn't need to change.
+`local-db.js` provides a minimal document-store API (`collection().onSnapshot`, `doc().set / update / delete`). To add cloud sync later (for example Firebase Firestore or Supabase), replace this file with an adapter that exposes the same methods. The app code doesn't need to change.
 
 Data is stored in three collections:
 
